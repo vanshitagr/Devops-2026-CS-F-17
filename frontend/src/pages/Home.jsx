@@ -26,7 +26,10 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
+// Re-fetch gigs whenever category or location filters change.
+// Search is handled separately via the form's onSubmit so we don't
+// hit the API on every keystroke.
+useEffect(() => {
     fetchGigs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, location]);
