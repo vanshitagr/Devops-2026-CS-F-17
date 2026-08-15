@@ -38,10 +38,7 @@ export default function Home() {
 
   return (
     <div className="page">
-      <div className="hero">
-        <h1>Find or offer a gig around SKIT Jagatpura</h1>
-        <p>Moving help, poster design, assignment help, tutoring & more - by students, for students.</p>
-      </div>
+      
 
       <form className="filters" onSubmit={handleSearchSubmit}>
         <input
