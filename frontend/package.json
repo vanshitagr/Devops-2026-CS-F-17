@@ -1,7 +1,10 @@
 {
+{
   "name": "gigboard-frontend",
   "version": "1.0.0",
   "private": true,
+  "description": "GigBoard React frontend - campus micro-gig board",
+  "keywords": ["react", "vite", "gigboard", "mern"],
   "type": "module",
   "scripts": {
     "dev": "vite",
