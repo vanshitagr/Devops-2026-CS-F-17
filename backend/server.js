@@ -5,6 +5,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.js";
 import gigRoutes from "./routes/gigs.js";
 import bidRoutes from "./routes/bids.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 dotenv.config();
 connectDB();
@@ -42,6 +43,9 @@ app.use((req, res) => {
     message: "Route not found",
   });
 });
+
+// Centralized error handler
+app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
