@@ -19,7 +19,9 @@ export default function GigDetail() {
 
   const [ratingValue, setRatingValue] = useState(5);
 
-  const isOwner = user && gig && gig.postedBy?._id === user._id;
+  // Determines which UI to show: the gig poster sees bid management
+// controls, while everyone else sees the "place a bid" form.
+const isOwner = user && gig && gig.postedBy?._id === user._id;
 
   const fetchGig = useCallback(async () => {
     const res = await api.get(`/gigs/${id}`);
