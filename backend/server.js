@@ -12,6 +12,8 @@ connectDB();
 const app = express();
 
 // Middleware
+// Restrict cross-origin requests to the deployed frontend URL in production;
+// falls back to allowing all origins during local development.
 app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
 app.use(express.json());
 
