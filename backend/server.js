@@ -9,8 +9,10 @@ import errorHandler from "./middleware/errorHandler.js";
 import requestLogger from "./middleware/requestLogger.js";
 import apiInfoRoutes from "./routes/apiInfo.js";
 import requestId from "./middleware/requestId.js";
+import { validateEnvironment } from "./config/env.js";
 
 dotenv.config();
+validateEnvironment();
 connectDB();
 
 const app = express();
