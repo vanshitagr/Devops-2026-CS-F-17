@@ -10,6 +10,7 @@ import requestLogger from "./middleware/requestLogger.js";
 import apiInfoRoutes from "./routes/apiInfo.js";
 import requestId from "./middleware/requestId.js";
 import { validateEnvironment } from "./config/env.js";
+import systemRoutes from "./routes/system.js";
 
 dotenv.config();
 validateEnvironment();
@@ -23,6 +24,7 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
 app.use(express.json());
 app.use(requestLogger);
+app.use(requestId);
 
 // Root API route
 app.get("/", (req, res) => {
@@ -45,8 +47,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/gigs", gigRoutes);
 app.use("/api/bids", bidRoutes);
 app.use("/api/info", apiInfoRoutes);
-app.use(requestId);
-
+app.use("/api/system", systemRoutes);
 
 // 404 handler
 app.use((req, res) => {
