@@ -65,6 +65,18 @@ app.use(errorHandler);
 // Start server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const shutdown = (signal) => {
+  console.log(`${signal} received. Shutting down server...`);
+
+  server.close(() => {
+    console.log("HTTP server closed");
+    process.exit(0);
+  });
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
