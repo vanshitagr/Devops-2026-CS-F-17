@@ -12,6 +12,7 @@ import requestId from "./middleware/requestId.js";
 import { validateEnvironment } from "./config/env.js";
 import systemRoutes from "./routes/system.js";
 import rateLimiter from "./middleware/rateLimiter.js";
+import validateRequest from "../middleware/validateRequest.js";
 
 dotenv.config();
 validateEnvironment();
@@ -83,3 +84,10 @@ const shutdown = (signal) => {
 
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
+router.post(
+  "/",
+  validateRequest(["title", "description"]),
+  async (req, res) => {
+    // existing logic
+  }
+);
