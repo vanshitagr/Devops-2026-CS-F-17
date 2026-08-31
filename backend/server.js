@@ -11,6 +11,7 @@ import apiInfoRoutes from "./routes/apiInfo.js";
 import requestId from "./middleware/requestId.js";
 import { validateEnvironment } from "./config/env.js";
 import systemRoutes from "./routes/system.js";
+import rateLimiter from "./middleware/rateLimiter.js";
 
 dotenv.config();
 validateEnvironment();
@@ -25,6 +26,8 @@ app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
 app.use(express.json());
 app.use(requestLogger);
 app.use(requestId);
+app.use(express.json());
+app.use(rateLimiter);
 
 // Root API route
 app.get("/", (req, res) => {
