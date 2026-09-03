@@ -302,4 +302,21 @@ textarea { resize: vertical; }
   .form-row { grid-template-columns: 1fr; }
   .nav-links { gap: 12px; font-size: 14px; }
   .navbar { padding: 12px 14px; }
+.spinner-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 30px 0;
+}
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 }
