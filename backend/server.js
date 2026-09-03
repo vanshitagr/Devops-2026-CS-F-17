@@ -8,6 +8,7 @@ import bidRoutes from "./routes/bids.js";
 import errorHandler from "./middleware/errorHandler.js";
 import requestLogger from "./middleware/requestLogger.js";
 import apiInfoRoutes from "./routes/apiInfo.js";
+import requestId from "./middleware/requestId.js";
 
 dotenv.config();
 connectDB();
@@ -41,6 +42,8 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/gigs", gigRoutes);
 app.use("/api/bids", bidRoutes);
+app.use("/api/info", apiInfoRoutes);
+app.use(requestId);
 
 
 // 404 handler
