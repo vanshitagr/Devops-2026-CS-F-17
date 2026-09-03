@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.js";
 import gigRoutes from "./routes/gigs.js";
 import bidRoutes from "./routes/bids.js";
 import errorHandler from "./middleware/errorHandler.js";
+import requestLogger from "./middleware/requestLogger.js";
 
 dotenv.config();
 connectDB();
@@ -17,6 +18,7 @@ const app = express();
 // falls back to allowing all origins during local development.
 app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
 app.use(express.json());
+app.use(requestLogger);
 
 // Root API route
 app.get("/", (req, res) => {
