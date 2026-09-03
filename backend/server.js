@@ -7,6 +7,7 @@ import gigRoutes from "./routes/gigs.js";
 import bidRoutes from "./routes/bids.js";
 import errorHandler from "./middleware/errorHandler.js";
 import requestLogger from "./middleware/requestLogger.js";
+import apiInfoRoutes from "./routes/apiInfo.js";
 
 dotenv.config();
 connectDB();
@@ -40,6 +41,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/gigs", gigRoutes);
 app.use("/api/bids", bidRoutes);
+
 
 // 404 handler
 app.use((req, res) => {
