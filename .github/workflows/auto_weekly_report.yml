@@ -1,4 +1,4 @@
-name: Weekly Progress Report Auto-Commit
+name: Weekly Progress report Auto-Commit
 
 on:
   schedule:
