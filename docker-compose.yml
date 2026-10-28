@@ -1,13 +1,13 @@
 services:
   backend:
     build: ./backend
-    container_name: seniorproto-type-backend-1
-    image: seniorproto-type-backend:latest
+    container_name: gigboard-backend
+    image: gigboard-backend:latest
     networks:
       fsd-shared-network:
         aliases:
           - backend
-          - seniorproto-type-backend-1
+          - gigboard-backend
     ports:
       - "5000:5000"
     environment:
@@ -22,13 +22,13 @@ services:
       context: ./frontend
       args:
         - VITE_API_URL=${VITE_API_URL:-http://localhost:5000/api}
-    container_name: seniorproto-type-frontend-1
-    image: seniorproto-type-frontend:latest
+    container_name: gigboard-frontend
+    image: gigboard-frontend:latest
     networks:
       fsd-shared-network:
         aliases:
           - frontend
-          - seniorproto-type-frontend-1
+          - gigboard-frontend
     ports:
       - "3000:80"
     depends_on:

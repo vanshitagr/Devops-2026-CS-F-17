@@ -6,6 +6,6 @@ rule_files:
   - "alerting_rules.yml"
 
 scrape_configs:
-  - job_name: 'my-own-website'
+  - job_name: 'gigboard-backend'
     static_configs:
-      - targets: ['seniorproto-type-backend-1:5000', 'backend:5000', 'host.docker.internal:5000']
+      - targets: ['gigboard-backend:5000', 'backend:5000', 'host.docker.internal:5000']

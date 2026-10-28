@@ -11,7 +11,7 @@ groups:
           description: "Prometheus failed to scrape {{ $labels.instance }} for more than 30 seconds."
 
       - alert: HighCpuUsage
-        expr: rate(process_cpu_user_seconds_total{job="my-own-website"}[1m]) * 100 > 80
+        expr: rate(process_cpu_user_seconds_total{job="gigboard-backend"}[1m]) * 100 > 80
         for: 1m
         labels:
           severity: warning
@@ -20,7 +20,7 @@ groups:
           description: "CPU usage exceeds 80% on instance {{ $labels.instance }}."
 
       - alert: EventLoopLagHigh
-        expr: nodejs_eventloop_lag_seconds{job="my-own-website"} > 0.1
+        expr: nodejs_eventloop_lag_seconds{job="gigboard-backend"} > 0.1
         for: 30s
         labels:
           severity: warning
@@ -29,7 +29,7 @@ groups:
           description: "Node.js event loop lag exceeds 100ms on {{ $labels.instance }}."
 
       - alert: NodeMemoryHigh
-        expr: (nodejs_heap_size_used_bytes{job="my-own-website"} / nodejs_heap_size_total_bytes{job="my-own-website"}) > 0.85
+        expr: (nodejs_heap_size_used_bytes{job="gigboard-backend"} / nodejs_heap_size_total_bytes{job="gigboard-backend"}) > 0.85
         for: 1m
         labels:
           severity: warning
