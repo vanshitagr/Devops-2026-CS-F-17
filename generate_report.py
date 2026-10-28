@@ -43,22 +43,43 @@ def get_repo_info():
 
     return repo_name, branch_name
 
-def get_git_metrics(interval="weekly"):
+def normalize_author(author):
+    """Normalize collaborator usernames to clear student identities."""
+    if not author:
+        return "Unknown"
+    norm = author.strip()
+    if norm.lower() in ["utkarsh16-tech", "utkarsh hinger", "utkarshhinger"]:
+        return "Utkarsh Hinger"
+    if norm.lower() in ["vanshitagr", "vanshita agrawal", "vanshita"]:
+        return "vanshitagr"
+    return norm
+
+def get_git_metrics(interval="weekly", target_date=None):
     """
     Parses Git commit logs and aggregates metrics.
     Supported intervals: 'weekly', 'monthly', 'final'
     """
-    today = datetime.date.today()
+    if target_date is None:
+        today = datetime.date.today()
+    elif isinstance(target_date, str):
+        today = datetime.datetime.strptime(target_date, "%Y-%m-%d").date()
+    else:
+        today = target_date
+
     git_args = ['git', 'log', '--no-merges', '--pretty=format:COMMIT|||%h|||%an|||%ad|||%s', '--date=short', '--numstat']
     
     if interval == "weekly":
         since_date = (today - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+        until_date = (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
         git_args.append(f"--since={since_date}")
-        scope_title = f"Last 7 Days (Since {since_date})"
+        git_args.append(f"--until={until_date}")
+        scope_title = f"Last 7 Days (Since {since_date} to {today.strftime('%Y-%m-%d')})"
     elif interval == "monthly":
         since_date = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        until_date = (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
         git_args.append(f"--since={since_date}")
-        scope_title = f"Last 30 Days (Since {since_date})"
+        git_args.append(f"--until={until_date}")
+        scope_title = f"Last 30 Days (Since {since_date} to {today.strftime('%Y-%m-%d')})"
     else:
         scope_title = "Complete Project Lifecycle (All Commits)"
 
@@ -84,17 +105,18 @@ def get_git_metrics(interval="weekly"):
             parts = line.split('|||')
             if len(parts) >= 5:
                 sha = parts[1].strip()
-                author = parts[2].strip()
+                raw_author = parts[2].strip()
                 date_str = parts[3].strip()
                 msg = parts[4].strip()
             else:
                 continue
             
             # Exclude bot commits from metric calculations
-            if "bot" in author.lower() or "github-actions" in author.lower():
+            if "bot" in raw_author.lower() or "github-actions" in raw_author.lower():
                 current_author = None
                 continue
             
+            author = normalize_author(raw_author)
             current_author = author
             current_date_str = date_str
             
@@ -122,10 +144,10 @@ def get_git_metrics(interval="weekly"):
 
     return students, timeline_activity, student_logs, scope_title
 
-def create_charts(students, timeline_activity, interval):
+def create_charts(students, timeline_activity, interval, save_assets=False):
     """Generates workload distribution and timeline comparison charts."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 3.8))
-    authors = list(students.keys())
+    authors = sorted(list(students.keys()))
     periods = sorted(timeline_activity.keys())
 
     # 1. Timeline Chart
@@ -139,7 +161,7 @@ def create_charts(students, timeline_activity, interval):
         ax1.grid(True, linestyle='--', alpha=0.5)
         ax1.legend(fontsize=8)
     else:
-        ax1.text(0.5, 0.5, "No commits found in this interval", ha='center', va='center')
+        ax1.text(0.5, 0.5, "No commits recorded in this interval", ha='center', va='center')
 
     # 2. Net LOC Chart
     if authors:
@@ -151,36 +173,50 @@ def create_charts(students, timeline_activity, interval):
         ax2.grid(axis='y', linestyle='--', alpha=0.5)
         ax2.tick_params(axis='x', rotation=15)
     else:
-        ax2.text(0.5, 0.5, "No LOC changes recorded", ha='center', va='center')
+        ax2.text(0.5, 0.5, "No LOC changes recorded in this interval", ha='center', va='center')
 
     plt.tight_layout()
+
+    if save_assets:
+        os.makedirs("assets", exist_ok=True)
+        plt.savefig("assets/evaluation_trends.png", dpi=200, bbox_inches='tight')
+
     img_buffer = io.BytesIO()
     plt.savefig(img_buffer, format='png', dpi=200)
     plt.close()
     img_buffer.seek(0)
     return Image(img_buffer, width=500, height=170)
 
-def generate_pdf(interval="weekly"):
+def generate_pdf(interval="weekly", target_date=None, output_dir=None):
     repo_name, branch_name = get_repo_info()
-    students, timeline_activity, student_logs, scope_title = get_git_metrics(interval)
+    students, timeline_activity, student_logs, scope_title = get_git_metrics(interval, target_date)
 
     if students is None:
         return
 
-    date_stamp = datetime.date.today().strftime("%Y-%m-%d")
+    if target_date:
+        date_stamp = target_date if isinstance(target_date, str) else target_date.strftime("%Y-%m-%d")
+    else:
+        date_stamp = datetime.date.today().strftime("%Y-%m-%d")
     
     if interval == "weekly":
         report_title = "Weekly Progress Report"
-        doc_name = f"{repo_name}_Weekly_Progress_Report_Form-3_{date_stamp}.pdf"
+        doc_filename = f"{repo_name}_Weekly_Progress_Report_Form-3_{date_stamp}.pdf"
     elif interval == "monthly":
         report_title = "Monthly Progress Report (Form-3)"
-        doc_name = f"{repo_name}_Monthly_Progress_Report_Form-3_{date_stamp}.pdf"
+        doc_filename = f"{repo_name}_Monthly_Progress_Report_Form-3_{date_stamp}.pdf"
     else:
         report_title = "Final Project Evaluation Report"
-        doc_name = f"{repo_name}_Final_Report_{date_stamp}.pdf"
+        doc_filename = f"{repo_name}_Final_Report_{date_stamp}.pdf"
+
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        full_path = os.path.join(output_dir, doc_filename)
+    else:
+        full_path = doc_filename
 
     doc = SimpleDocTemplate(
-        doc_name,
+        full_path,
         pagesize=letter,
         rightMargin=36,
         leftMargin=36,
@@ -245,7 +281,8 @@ def generate_pdf(interval="weekly"):
     table_data = [["Student Name", "Commits (%)", "Lines Added", "Lines Deleted", "Net LOC", "Active Days"]]
     
     if students:
-        for name, data in students.items():
+        for name in sorted(students.keys()):
+            data = students[name]
             pct = (data["commits"] / total_commits * 100) if total_commits > 0 else 0
             net = data["added"] - data["deleted"]
             table_data.append([
@@ -257,7 +294,7 @@ def generate_pdf(interval="weekly"):
                 f"{len(data['active_days'])} days"
             ])
     else:
-        table_data.append(["No commits found in this period. Run with 'final' to see all commits.", "-", "-", "-", "-", "-"])
+        table_data.append(["No commits recorded in this period. Run with 'final' to see all commits.", "-", "-", "-", "-", "-"])
 
     table = Table(table_data, colWidths=[120, 80, 80, 80, 80, 100])
     table.setStyle(TableStyle([
@@ -277,7 +314,7 @@ def generate_pdf(interval="weekly"):
 
     # 4. Visual Charts
     story.append(Paragraph("2. Visual Trends & Volume", section_style))
-    chart_image = create_charts(students, timeline_activity, interval)
+    chart_image = create_charts(students, timeline_activity, interval, save_assets=(interval == "final"))
     story.append(chart_image)
     story.append(Spacer(1, 6))
 
@@ -286,7 +323,8 @@ def generate_pdf(interval="weekly"):
     if not student_logs:
         story.append(Paragraph("<i>No commit logs found for this timeframe.</i>", styles['Normal']))
     else:
-        for student_name, logs in student_logs.items():
+        for student_name in sorted(student_logs.keys()):
+            logs = student_logs[student_name]
             student_section = []
             student_section.append(Paragraph(f"<b>Student:</b> {html.escape(student_name)} — <i>{len(logs)} commit(s)</i>", sub_section_style))
             
@@ -318,9 +356,36 @@ def generate_pdf(interval="weekly"):
             story.append(KeepTogether(student_section))
 
     doc.build(story)
-    print(f"\n[SUCCESS] Generated: {doc_name}")
-    print(f" -> Found {len(students)} student(s) and {total_commits} total commits.")
+    print(f"[SUCCESS] Generated: {full_path} ({len(students)} contributor(s), {total_commits} commits)")
+    return full_path
+
+def generate_all_weekly_reports():
+    """Generates the full progression of weekly progress reports matching reference milestones."""
+    milestone_dates = [
+        "2026-08-31",
+        "2026-09-05",
+        "2026-09-12",
+        "2026-09-19",
+        "2026-09-26",
+        "2026-09-27",
+        "2026-10-03",
+        "2026-10-10",
+        "2026-10-17",
+        "2026-10-24",
+        "2026-10-28"
+    ]
+    output_directory = "weekly_reports"
+    print(f"\n[INFO] Generating {len(milestone_dates)} Weekly Progress Reports for past weeks into '{output_directory}'...")
+    for m_date in milestone_dates:
+        generate_pdf(interval="weekly", target_date=m_date, output_dir=output_directory)
 
 if __name__ == "__main__":
-    chosen_interval = sys.argv[1].lower() if len(sys.argv) > 1 else "weekly"
-    generate_pdf(chosen_interval)
+    mode = sys.argv[1].lower() if len(sys.argv) > 1 else "weekly"
+    if mode == "all-weekly":
+        generate_all_weekly_reports()
+    elif mode == "final":
+        generate_pdf("final")
+    elif len(sys.argv) > 2:
+        generate_pdf(mode, target_date=sys.argv[2], output_dir="weekly_reports")
+    else:
+        generate_pdf(mode)

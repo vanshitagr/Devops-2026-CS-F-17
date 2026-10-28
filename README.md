@@ -1,95 +1,135 @@
-# GigBoard — Campus Micro-Gig Board
+# GigBoard — Campus Micro-Gig Board (DevOps-2026-CS-F-17)
 
-A full-stack MERN application built as a summer internship and DevOps project. GigBoard is a mini "Fiverr for college" where students can post small paid tasks (gigs) — help shifting a hostel room, poster design, assignment help, tutoring, etc. — and other students can bid on them. The poster reviews bids and picks one person to do the work.
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-17%20passed-success.svg)]()
+[![Docker](https://img.shields.io/badge/docker-compose-blue.svg)]()
+[![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-orange.svg)]()
+[![Grafana](https://img.shields.io/badge/Grafana-Dashboard-F46800.svg)]()
+[![Institution](https://img.shields.io/badge/SKIT-Jaipur-002147.svg)]()
 
-Themed and seeded with sample data for **SKIT, Jagatpura, Jaipur**, but the category/location lists in `frontend/src/constants.js` can be edited for any college or city in five minutes.
-
----
-
-## 1. Tech Stack
-
-| Layer     | Technology |
-|-----------|------------|
-| Frontend  | React 18 (Vite), React Router, Axios, plain CSS |
-| Backend   | Node.js, Express, prom-client |
-| Database  | MongoDB (Mongoose) |
-| Auth      | JWT (JSON Web Tokens) + bcrypt password hashing |
-| DevOps    | Docker & Docker Compose, Prometheus, Grafana, Jenkins CI/CD, GitHub Actions |
-| Reports   | Python (ReportLab & Matplotlib) automated Form-3 and Final PDF Evaluation |
+A full-stack MERN application built as an academic internship and DevOps project for **Swami Keshvanand Institute of Technology, Management & Gramothan, Jaipur (SKIT)**. GigBoard is a localized campus micro-gig marketplace where students post tasks (room shifting, design, tutoring, assignment notes) and peer students submit bids.
 
 ---
 
-## 2. Core Features
+## 1. Project Visualizations & Monitoring Dashboards
 
-- Register/login with JWT auth.
-- Post a gig: title, description, category, budget (₹), Jaipur-area location, deadline.
-- Browse/search/filter open gigs by category, location, keyword.
-- Place a bid with an amount + message.
-- Poster reviews bids and selects a winner → status becomes `assigned`.
-- Poster marks gig `completed` and rates worker (1–5 stars) → updates worker profile.
-- Real-time Prometheus metrics exporter at `/metrics` and Grafana NodeJS Application Dashboard.
-- Automated Git evaluation reports (Weekly Form-3 and Final Project Evaluation Report).
+### A. Grafana — NodeJS Application Dashboard
+Real-time containerized telemetry visualizing **Process CPU Usage**, **Event Loop Lag**, **Node.js Runtime Version**, **Process Restart Times**, **Memory & Heap Allocation Details**, and **Active Handlers / Requests Total**:
+
+![Grafana NodeJS Application Dashboard](assets/grafana_dashboard.png)
+
+* **Dashboard URL**: `http://localhost:3001` (User: `admin`, Password: `admin`)
+* **Dashboard JSON Definition**: [`grafana/provisioning/dashboards/nodejs_dashboard.json`](grafana/provisioning/dashboards/nodejs_dashboard.json)
+* **Automated Provisioning**: Pre-configured in Docker Compose to mount and auto-load upon container start.
 
 ---
 
-## 3. DevOps, Monitoring & Containerization
+### B. Prometheus — Scraper & Target Health
+Scraping raw application metrics from the backend exporter endpoint (`/metrics`) every **5 seconds** under job `my-own-website`:
 
-### A. Prometheus & Grafana Monitoring
-- **Prometheus Scraper**: Exposes Node.js runtime and application metrics on `/metrics` using `prom-client`.
-- **Target Configuration**: Configured in `prometheus.yml` under job name `my-own-website` with 5s scrape interval.
-- **Grafana Dashboard**: Visualizes Process CPU Usage, Event Loop Lag, Memory & Heap details, and Active Handlers.
-- **Accessing Monitoring Services**:
-  - Prometheus Web UI: `http://localhost:9091`
-  - Grafana Dashboard: `http://localhost:3001` (User: `admin`, Password: `admin`)
-  - Backend Metrics: `http://localhost:5000/metrics`
+![Prometheus Target Health](assets/prometheus_targets.png)
 
-### B. Docker Compose Stack
-To spin up the entire multi-container environment (Backend, Frontend, Prometheus, Grafana):
+* **Prometheus UI**: `http://localhost:9091/targets`
+* **Exposition Endpoint**: `http://localhost:5000/metrics`
+* **Configuration**: [`prometheus.yml`](prometheus.yml)
+
+---
+
+### C. Project Evaluation Trends & Volume
+Visual distribution of commit activity and net code contribution generated across the project lifecycle:
+
+![Git Commit Trends & LOC Volume](assets/evaluation_trends.png)
+
+---
+
+## 2. Student Contribution Breakdown
+
+| Student Name | Commits (%) | Lines Added | Lines Deleted | Net LOC | Active Days | Role / Contributions |
+|---|:---:|:---:|:---:|:---:|:---:|---|
+| **vanshitagr** | 33 (54.1%) | +25,840 | -3,420 | 22,420 | 18 days | Frontend architecture, Auth flows, CI/CD Jenkinsfile, Docker packaging, Grafana setup |
+| **Utkarsh Hinger** | 28 (45.9%) | +18,920 | -2,150 | 16,770 | 14 days | Backend API endpoints, Mongoose models, Rate limiting, Request logging, Prometheus exporter |
+
+* **Full Final Report**: [Devops-2026-CS-F-17_Final_Report_2026-10-29.pdf](Devops-2026-CS-F-17_Final_Report_2026-10-29.pdf)
+
+---
+
+## 3. Weekly Progress Reports Archive (Form-3)
+
+Weekly progress reports automatically generated via ReportLab and Matplotlib, tracking week-by-week sprint deliverables:
+
+| Week # | Report Window / Milestone Date | Status | Downloadable Form-3 PDF |
+|:---:|:---:|:---:|:---:|
+| **Week 1** | August 31, 2026 | Archived | [Form-3 Report (2026-08-31)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-08-31.pdf) |
+| **Week 2** | September 05, 2026 | Archived | [Form-3 Report (2026-09-05)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-09-05.pdf) |
+| **Week 3** | September 12, 2026 | Archived | [Form-3 Report (2026-09-12)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-09-12.pdf) |
+| **Week 4** | September 19, 2026 | Archived | [Form-3 Report (2026-09-19)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-09-19.pdf) |
+| **Week 5** | September 26, 2026 | Archived | [Form-3 Report (2026-09-26)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-09-26.pdf) |
+| **Week 6** | September 27, 2026 | Archived | [Form-3 Report (2026-09-27)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-09-27.pdf) |
+| **Week 7** | October 03, 2026 | Archived | [Form-3 Report (2026-10-03)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-10-03.pdf) |
+| **Week 8** | October 10, 2026 | Archived | [Form-3 Report (2026-10-10)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-10-10.pdf) |
+| **Week 9** | October 17, 2026 | Archived | [Form-3 Report (2026-10-17)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-10-17.pdf) |
+| **Week 10** | October 24, 2026 | Archived | [Form-3 Report (2026-10-24)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-10-24.pdf) |
+| **Week 11** | October 28, 2026 | Archived | [Form-3 Report (2026-10-28)](weekly_reports/Devops-2026-CS-F-17_Weekly_Progress_Report_Form-3_2026-10-28.pdf) |
+
+---
+
+## 4. Tech Stack & Architecture
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | React 18 (Vite), React Router v6, Axios, Custom CSS Modules |
+| **Backend** | Node.js, Express, `prom-client` (Prometheus metrics) |
+| **Database** | MongoDB & Mongoose ORM |
+| **Authentication** | JWT (JSON Web Tokens) with bcrypt password salting |
+| **Containerization** | Docker, Docker Compose, Nginx multi-stage builds |
+| **Monitoring** | Prometheus v2.x, Grafana v10.x |
+| **CI/CD** | Jenkins Automation Pipeline (`Jenkinsfile`), GitHub Actions |
+| **Reporting** | Python 3, ReportLab, Matplotlib |
+
+---
+
+## 5. Running the Project
+
+### A. Quick Start via Docker Compose (Recommended)
+Spins up Backend, Frontend, Prometheus, and Grafana in a single command:
 ```bash
 docker compose up --build -d
 ```
-
-### C. Automated Git Evaluation & Weekly Progress Reports
-Generate professional evaluation reports with student contribution breakdowns, commit timelines, and Net LOC charts:
-```bash
-# Generate Final Project Evaluation Report:
-python generate_report.py final
-
-# Generate Weekly Progress Report (Form-3):
-python generate_report.py weekly
-```
-Weekly reports are also auto-generated and archived every Saturday via GitHub Actions workflow (`.github/workflows/auto_weekly_report.yml`).
-
-### D. Jenkins CI/CD Pipeline
-- Structured declarative pipeline (`Jenkinsfile`) with stages:
-  1. `Checkout`: Pulls latest branch code.
-  2. `Check Feedback Commit`: Prevents recursive feedback loop commits.
-  3. `Install Dependencies`: Installs packages for backend & frontend.
-  4. `Run Tests`: Executes unit tests with JUnit XML export (`backend/test-results.xml`, `frontend/test-results.xml`).
-  5. `Build Frontend`: Compiles Vite production bundle.
-  6. `Docker Compose Validation`: Verifies container configuration.
-  7. `Generate Feedback`: Outputs `feedback.txt` and updates feedback record.
-  8. `Push Feedback to Main`: Automated feedback commit to repository.
+* **Frontend**: `http://localhost:3000`
+* **Backend API**: `http://localhost:5000`
+* **Prometheus Targets**: `http://localhost:9091/targets`
+* **Grafana Dashboard**: `http://localhost:3001` (User: `admin` / Password: `admin`)
 
 ---
 
-## 4. Running Locally
+### B. Running Locally (Development Mode)
 
-### Backend
+#### 1. Backend Setup
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# Edit .env with your MONGO_URI and JWT_SECRET
-npm run seed     # optional: loads demo SKIT users & gigs
-npm run test     # runs unit test suite
-npm run dev      # starts server on http://localhost:5000
+npm run seed       # loads demo users & campus gigs
+npm run test:ci    # runs 12 backend unit tests with JUnit output
+npm run dev        # starts backend on http://localhost:5000
 ```
 
-### Frontend
+#### 2. Frontend Setup
 ```bash
 cd frontend
 npm install
-npm run test     # runs frontend unit tests
-npm run dev      # starts on http://localhost:5173
+npm run test:ci    # runs 5 frontend unit tests with JUnit output
+npm run dev        # starts frontend on http://localhost:5173
 ```
+
+---
+
+### C. Regenerating PDF Progress Reports
+```bash
+# Generate the complete Final Evaluation Report:
+python generate_report.py final
+
+# Generate all past weekly Form-3 progress reports:
+python generate_report.py all-weekly
+```
+Weekly reports are also automatically generated and committed via GitHub Actions on every Saturday (`.github/workflows/auto_weekly_report.yml`).
