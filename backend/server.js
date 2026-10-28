@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import client from "prom-client";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.js";
 import gigRoutes from "./routes/gigs.js";
@@ -12,13 +13,25 @@ import requestId from "./middleware/requestId.js";
 import { validateEnvironment } from "./config/env.js";
 import systemRoutes from "./routes/system.js";
 import rateLimiter from "./middleware/rateLimiter.js";
-import validateRequest from "../middleware/validateRequest.js";
 
 dotenv.config();
 validateEnvironment();
 connectDB();
 
 const app = express();
+
+// Enable default Prometheus metrics collection
+client.collectDefaultMetrics();
+
+// Prometheus metrics endpoint for scraping
+app.get("/metrics", async (req, res) => {
+  try {
+    res.set("Content-Type", client.register.contentType);
+    res.send(await client.register.metrics());
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
 
 // Middleware
 // Restrict cross-origin requests to the deployed frontend URL in production;
@@ -27,7 +40,6 @@ app.use(cors({ origin: process.env.CLIENT_URL || "*" }));
 app.use(express.json());
 app.use(requestLogger);
 app.use(requestId);
-app.use(express.json());
 app.use(rateLimiter);
 
 // Root API route
@@ -69,25 +81,27 @@ app.use(errorHandler);
 // Start server
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+let server = null;
+if (process.env.NODE_ENV !== "test") {
+  server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
 const shutdown = (signal) => {
   console.log(`${signal} received. Shutting down server...`);
-
-  server.close(() => {
-    console.log("HTTP server closed");
+  if (server) {
+    server.close(() => {
+      console.log("HTTP server closed");
+      process.exit(0);
+    });
+  } else {
     process.exit(0);
-  });
+  }
 };
 
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
-router.post(
-  "/",
-  validateRequest(["title", "description"]),
-  async (req, res) => {
-    // existing logic
-  }
-);
+
+export { app, server };
+export default app;
