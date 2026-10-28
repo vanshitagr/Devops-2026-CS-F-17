@@ -1,0 +1,66 @@
+services:
+  backend:
+    build: ./backend
+    container_name: seniorproto-type-backend-1
+    image: seniorproto-type-backend:latest
+    networks:
+      fsd-shared-network:
+        aliases:
+          - backend
+          - seniorproto-type-backend-1
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - FRONTEND_URL=http://localhost:3000
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: always
+
+  frontend:
+    build: 
+      context: ./frontend
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:5000/api}
+    container_name: seniorproto-type-frontend-1
+    image: seniorproto-type-frontend:latest
+    networks:
+      fsd-shared-network:
+        aliases:
+          - frontend
+          - seniorproto-type-frontend-1
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - fsd-shared-network
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - fsd-shared-network
+    restart: always
+
+networks:
+  fsd-shared-network:
+    driver: bridge

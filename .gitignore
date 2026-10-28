@@ -1,0 +1,13 @@
+backend/node_modules/
+frontend/node_modules/
+node_modules/
+.env
+.idea/
+.vscode/
+frontend/dist/
+dist/
+build/
+test-results.xml
+*-results.xml
+feedback.txt
+*.log
