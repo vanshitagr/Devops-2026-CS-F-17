@@ -6,8 +6,10 @@ import User from '../models/User.js';
 import Gig from '../models/Gig.js';
 import Bid from '../models/Bid.js';
 import client from 'prom-client';
+import requestId from '../middleware/requestId.js';
+import validateRequest from '../middleware/validateRequest.js';
 
-describe('GigBoard Backend Unit Tests', () => {
+describe('GigBoard Backend Unit & Integration Tests', () => {
 
     describe('Prometheus Metrics Integration', () => {
         it('should have collectDefaultMetrics registered', async () => {
@@ -22,7 +24,7 @@ describe('GigBoard Backend Unit Tests', () => {
         });
     });
 
-    describe('User Model Schema Validation', () => {
+    describe('User Model Schema & Security Validation', () => {
         it('should require name field', async () => {
             const user = new User({ email: 'test@skit.ac.in', password: 'password123' });
             let err = null;
@@ -60,12 +62,19 @@ describe('GigBoard Backend Unit Tests', () => {
             assert.equal(isMatch, true, 'Password comparison should match');
         });
 
-        it('should generate valid JWT tokens', () => {
+        it('should generate valid JWT tokens with expiration', () => {
             const secret = 'test-devops-jwt-secret';
             const payload = { id: 'mock-user-id-123' };
             const token = jwt.sign(payload, secret, { expiresIn: '1d' });
             const decoded = jwt.verify(token, secret);
             assert.equal(decoded.id, 'mock-user-id-123');
+        });
+
+        it('should exclude password field in toSafeObject helper', () => {
+            const user = new User({ name: 'Vanshita', email: 'v@skit.ac.in', password: 'password123' });
+            const safe = user.toSafeObject();
+            assert.equal(safe.password, undefined, 'Password must be stripped from public representation');
+            assert.equal(safe.name, 'Vanshita');
         });
     });
 
@@ -93,6 +102,17 @@ describe('GigBoard Backend Unit Tests', () => {
             });
             assert.equal(gig.status, 'open');
         });
+
+        it('should accept valid gig categories (moving, design, notes, tech, etc.)', () => {
+            const gig = new Gig({
+                title: 'Poster Design for Fest',
+                description: 'Need a Canva poster for technical symposium',
+                category: 'design',
+                budget: 350,
+                postedBy: '507f1f77bcf86cd799439011'
+            });
+            assert.equal(gig.category, 'design');
+        });
     });
 
     describe('Bid Model Schema Validation', () => {
@@ -114,6 +134,49 @@ describe('GigBoard Backend Unit Tests', () => {
                 message: 'I can do this today after 5pm'
             });
             assert.equal(bid.status, 'pending');
+        });
+    });
+
+    describe('Middleware & Request Utilities', () => {
+        it('should attach unique X-Request-ID if not present', () => {
+            const req = { headers: {} };
+            const headersSet = {};
+            const res = { setHeader: (k, v) => { headersSet[k] = v; } };
+            let nextCalled = false;
+
+            requestId(req, res, () => { nextCalled = true; });
+
+            assert.equal(nextCalled, true, 'Next middleware should be called');
+            assert.ok(req.requestId, 'req.requestId should be populated');
+            assert.equal(headersSet['X-Request-ID'], req.requestId);
+        });
+
+        it('should validate required payload fields in validateRequest middleware', () => {
+            const middleware = validateRequest(['title', 'budget']);
+            const invalidReq = { body: { title: 'Test Gig' } };
+            let responseStatus = null;
+            let responseBody = null;
+            const res = {
+                status: (code) => {
+                    responseStatus = code;
+                    return { json: (data) => { responseBody = data; } };
+                }
+            };
+
+            middleware(invalidReq, res, () => {});
+
+            assert.equal(responseStatus, 400, 'Should respond with HTTP 400 on missing budget');
+            assert.ok(responseBody.fields.includes('budget'));
+        });
+
+        it('should pass validation when all required fields are provided', () => {
+            const middleware = validateRequest(['title', 'budget']);
+            const validReq = { body: { title: 'Test Gig', budget: 500 } };
+            let nextCalled = false;
+
+            middleware(validReq, {}, () => { nextCalled = true; });
+
+            assert.equal(nextCalled, true, 'Next middleware should be called on valid payload');
         });
     });
 });

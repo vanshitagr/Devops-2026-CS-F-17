@@ -1,0 +1,38 @@
+groups:
+  - name: nodejs_alerts
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.instance }} is down"
+          description: "Prometheus failed to scrape {{ $labels.instance }} for more than 30 seconds."
+
+      - alert: HighCpuUsage
+        expr: rate(process_cpu_user_seconds_total{job="my-own-website"}[1m]) * 100 > 80
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage exceeds 80% on instance {{ $labels.instance }}."
+
+      - alert: EventLoopLagHigh
+        expr: nodejs_eventloop_lag_seconds{job="my-own-website"} > 0.1
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Event loop lag high on {{ $labels.instance }}"
+          description: "Node.js event loop lag exceeds 100ms on {{ $labels.instance }}."
+
+      - alert: NodeMemoryHigh
+        expr: (nodejs_heap_size_used_bytes{job="my-own-website"} / nodejs_heap_size_total_bytes{job="my-own-website"}) > 0.85
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Heap Memory utilization on {{ $labels.instance }}"
+          description: "Node.js heap memory usage exceeds 85% of total allocated heap."

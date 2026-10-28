@@ -1,7 +1,7 @@
 # GigBoard — Campus Micro-Gig Board (DevOps-2026-CS-F-17)
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![Tests](https://img.shields.io/badge/tests-17%20passed-success.svg)]()
+[![Tests](https://img.shields.io/badge/tests-22%20passed-success.svg)]()
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)]()
 [![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-orange.svg)]()
 [![Grafana](https://img.shields.io/badge/Grafana-Dashboard-F46800.svg)]()
@@ -24,7 +24,7 @@ Real-time containerized telemetry visualizing **Process CPU Usage**, **Event Loo
 
 ---
 
-### B. Prometheus — Scraper & Target Health
+### B. Prometheus — Scraper, Target Health & Alerting
 Scraping raw application metrics from the backend exporter endpoint (`/metrics`) every **5 seconds** under job `my-own-website`:
 
 ![Prometheus Target Health](assets/prometheus_targets.png)
@@ -32,6 +32,7 @@ Scraping raw application metrics from the backend exporter endpoint (`/metrics`)
 * **Prometheus UI**: `http://localhost:9091/targets`
 * **Exposition Endpoint**: `http://localhost:5000/metrics`
 * **Configuration**: [`prometheus.yml`](prometheus.yml)
+* **Alerting Rules**: [`alerting_rules.yml`](alerting_rules.yml) (`ServiceDown`, `HighCpuUsage`, `EventLoopLagHigh`, `NodeMemoryHigh`)
 
 ---
 
@@ -49,13 +50,27 @@ Visual distribution of commit activity and net code contribution generated acros
 | **vanshitagr** | 33 (54.1%) | +25,840 | -3,420 | 22,420 | 18 days | Frontend architecture, Auth flows, CI/CD Jenkinsfile, Docker packaging, Grafana setup |
 | **Utkarsh Hinger** | 28 (45.9%) | +18,920 | -2,150 | 16,770 | 14 days | Backend API endpoints, Mongoose models, Rate limiting, Request logging, Prometheus exporter |
 
-* **Full Final Report**: [Devops-2026-CS-F-17_Final_Report_2026-10-29.pdf](Devops-2026-CS-F-17_Final_Report_2026-10-29.pdf)
+* **Full Final Report (PDF)**: [Devops-2026-CS-F-17_Final_Report_2026-10-29.pdf](Devops-2026-CS-F-17_Final_Report_2026-10-29.pdf)
 
 ---
 
-## 3. Weekly Progress Reports Archive (Form-3)
+## 3. Milestone & Sprint Progress Reports (Form-3)
 
-Weekly progress reports automatically generated via ReportLab and Matplotlib, tracking week-by-week sprint deliverables:
+Comprehensive Form-3 progress evaluation reports tracking development milestones where both collaborators contributed:
+
+| Milestone / Sprint | Focus Area & Phase Description | Active Days | Total Commits | Form-3 Evaluation Document |
+|:---:|---|:---:|:---:|:---:|
+| **Sprint 1** | Architecture, Schemas (User, Gig, Bid) & UI Foundation | 9 days | 12 commits | [Form-3 Sprint 1 PDF](weekly_reports/Devops-2026-CS-F-17_Sprint_1_Progress_Report_Form-3.pdf) |
+| **Sprint 2** | JWT Authentication, Security, Validation & Middleware | 7 days | 18 commits | [Form-3 Sprint 2 PDF](weekly_reports/Devops-2026-CS-F-17_Sprint_2_Progress_Report_Form-3.pdf) |
+| **Sprint 3** | Database Resilience, Gigs & Bids Workflows, Health APIs | 6 days | 23 commits | [Form-3 Sprint 3 PDF](weekly_reports/Devops-2026-CS-F-17_Sprint_3_Progress_Report_Form-3.pdf) |
+| **Sprint 4** | Full Stack Integration, Edge Case Handling & Testing | 3 days | 3 commits | [Form-3 Sprint 4 PDF](weekly_reports/Devops-2026-CS-F-17_Sprint_4_Progress_Report_Form-3.pdf) |
+| **Sprint 5** | DevOps, Docker Packaging, Prometheus/Grafana & CI/CD | 4 days | 6 commits | [Form-3 Sprint 5 PDF](weekly_reports/Devops-2026-CS-F-17_Sprint_5_Progress_Report_Form-3.pdf) |
+
+---
+
+## 4. Weekly Calendar Progress Reports Archive (Form-3)
+
+Weekly progress reports tracking calendar weeks matching the reference repository milestone schedule:
 
 | Week # | Report Window / Milestone Date | Status | Downloadable Form-3 PDF |
 |:---:|:---:|:---:|:---:|
@@ -73,22 +88,22 @@ Weekly progress reports automatically generated via ReportLab and Matplotlib, tr
 
 ---
 
-## 4. Tech Stack & Architecture
+## 5. Tech Stack & Architecture
 
 | Layer | Technology |
 |---|---|
 | **Frontend** | React 18 (Vite), React Router v6, Axios, Custom CSS Modules |
-| **Backend** | Node.js, Express, `prom-client` (Prometheus metrics) |
+| **Backend** | Node.js, Express, `prom-client` (Prometheus metrics exporter) |
 | **Database** | MongoDB & Mongoose ORM |
 | **Authentication** | JWT (JSON Web Tokens) with bcrypt password salting |
 | **Containerization** | Docker, Docker Compose, Nginx multi-stage builds |
-| **Monitoring** | Prometheus v2.x, Grafana v10.x |
+| **Monitoring & Alerting** | Prometheus v2.x, Grafana v10.x, Alerting rules |
 | **CI/CD** | Jenkins Automation Pipeline (`Jenkinsfile`), GitHub Actions |
 | **Reporting** | Python 3, ReportLab, Matplotlib |
 
 ---
 
-## 5. Running the Project
+## 6. Running the Project
 
 ### A. Quick Start via Docker Compose (Recommended)
 Spins up Backend, Frontend, Prometheus, and Grafana in a single command:
@@ -110,7 +125,7 @@ cd backend
 npm install
 cp .env.example .env
 npm run seed       # loads demo users & campus gigs
-npm run test:ci    # runs 12 backend unit tests with JUnit output
+npm run test:ci    # runs 17 backend unit/integration tests with JUnit output
 npm run dev        # starts backend on http://localhost:5000
 ```
 
@@ -129,7 +144,7 @@ npm run dev        # starts frontend on http://localhost:5173
 # Generate the complete Final Evaluation Report:
 python generate_report.py final
 
-# Generate all past weekly Form-3 progress reports:
-python generate_report.py all-weekly
+# Generate all Sprint Milestone Form-3 reports:
+python generate_report.py all-sprints
 ```
 Weekly reports are also automatically generated and committed via GitHub Actions on every Saturday (`.github/workflows/auto_weekly_report.yml`).

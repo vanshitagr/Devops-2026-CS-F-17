@@ -54,33 +54,40 @@ def normalize_author(author):
         return "vanshitagr"
     return norm
 
-def get_git_metrics(interval="weekly", target_date=None):
+def get_git_metrics(interval="weekly", target_date=None, start_date=None, end_date=None, custom_scope=None):
     """
     Parses Git commit logs and aggregates metrics.
-    Supported intervals: 'weekly', 'monthly', 'final'
+    Supported intervals: 'weekly', 'monthly', 'final', 'sprint'
     """
-    if target_date is None:
-        today = datetime.date.today()
-    elif isinstance(target_date, str):
-        today = datetime.datetime.strptime(target_date, "%Y-%m-%d").date()
-    else:
-        today = target_date
-
-    git_args = ['git', 'log', '--no-merges', '--pretty=format:COMMIT|||%h|||%an|||%ad|||%s', '--date=short', '--numstat']
+    git_args = ['git', 'log', '--pretty=format:COMMIT|||%h|||%an|||%ad|||%s', '--date=short', '--numstat']
     
-    if interval == "weekly":
-        since_date = (today - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
-        until_date = (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-        git_args.append(f"--since={since_date}")
-        git_args.append(f"--until={until_date}")
-        scope_title = f"Last 7 Days (Since {since_date} to {today.strftime('%Y-%m-%d')})"
+    if start_date and end_date:
+        scope_title = custom_scope or f"Milestone Window: {start_date} to {end_date}"
+        filter_start = start_date
+        filter_end = end_date
+    elif interval == "weekly":
+        if target_date is None:
+            today = datetime.date.today()
+        elif isinstance(target_date, str):
+            today = datetime.datetime.strptime(target_date, "%Y-%m-%d").date()
+        else:
+            today = target_date
+        filter_start = (today - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+        filter_end = (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        scope_title = f"Sprint Window ({filter_start} to {today.strftime('%Y-%m-%d')})"
     elif interval == "monthly":
-        since_date = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-        until_date = (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-        git_args.append(f"--since={since_date}")
-        git_args.append(f"--until={until_date}")
-        scope_title = f"Last 30 Days (Since {since_date} to {today.strftime('%Y-%m-%d')})"
+        if target_date is None:
+            today = datetime.date.today()
+        elif isinstance(target_date, str):
+            today = datetime.datetime.strptime(target_date, "%Y-%m-%d").date()
+        else:
+            today = target_date
+        filter_start = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        filter_end = (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        scope_title = f"Sprint Month ({filter_start} to {today.strftime('%Y-%m-%d')})"
     else:
+        filter_start = None
+        filter_end = None
         scope_title = "Complete Project Lifecycle (All Commits)"
 
     try:
@@ -95,6 +102,7 @@ def get_git_metrics(interval="weekly", target_date=None):
 
     current_author = None
     current_date_str = None
+    in_scope = False
 
     for line in raw_output.strip().split('\n'):
         line = line.strip()
@@ -114,8 +122,17 @@ def get_git_metrics(interval="weekly", target_date=None):
             # Exclude bot commits from metric calculations
             if "bot" in raw_author.lower() or "github-actions" in raw_author.lower():
                 current_author = None
+                in_scope = False
                 continue
             
+            # Filter by date range if applicable
+            if filter_start and filter_end:
+                if not (filter_start <= date_str <= filter_end):
+                    current_author = None
+                    in_scope = False
+                    continue
+
+            in_scope = True
             author = normalize_author(raw_author)
             current_author = author
             current_date_str = date_str
@@ -126,8 +143,8 @@ def get_git_metrics(interval="weekly", target_date=None):
             
             try:
                 dt = datetime.datetime.strptime(current_date_str, "%Y-%m-%d").date()
-                if interval == "weekly":
-                    period_key = dt.strftime("%a (%b %d)")
+                if interval == "weekly" or interval == "sprint":
+                    period_key = dt.strftime("%b %d")
                 elif interval == "monthly":
                     period_key = f"{dt.isocalendar()[0]}-W{dt.isocalendar()[1]:02d}"
                 else:
@@ -136,7 +153,7 @@ def get_git_metrics(interval="weekly", target_date=None):
             except Exception:
                 pass
 
-        elif current_author and not line.startswith('COMMIT|||'):
+        elif in_scope and current_author and not line.startswith('COMMIT|||'):
             parts = line.split()
             if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
                 students[current_author]["added"] += int(parts[0])
@@ -187,27 +204,30 @@ def create_charts(students, timeline_activity, interval, save_assets=False):
     img_buffer.seek(0)
     return Image(img_buffer, width=500, height=170)
 
-def generate_pdf(interval="weekly", target_date=None, output_dir=None):
+def generate_pdf(interval="weekly", target_date=None, start_date=None, end_date=None, custom_scope=None, custom_filename=None, output_dir=None):
     repo_name, branch_name = get_repo_info()
-    students, timeline_activity, student_logs, scope_title = get_git_metrics(interval, target_date)
+    students, timeline_activity, student_logs, scope_title = get_git_metrics(
+        interval=interval,
+        target_date=target_date,
+        start_date=start_date,
+        end_date=end_date,
+        custom_scope=custom_scope
+    )
 
     if students is None:
         return
 
-    if target_date:
+    if custom_filename:
+        doc_filename = custom_filename
+    elif target_date:
         date_stamp = target_date if isinstance(target_date, str) else target_date.strftime("%Y-%m-%d")
+        doc_filename = f"{repo_name}_Weekly_Progress_Report_Form-3_{date_stamp}.pdf"
+    elif interval == "final":
+        date_stamp = datetime.date.today().strftime("%Y-%m-%d")
+        doc_filename = f"{repo_name}_Final_Report_{date_stamp}.pdf"
     else:
         date_stamp = datetime.date.today().strftime("%Y-%m-%d")
-    
-    if interval == "weekly":
-        report_title = "Weekly Progress Report"
         doc_filename = f"{repo_name}_Weekly_Progress_Report_Form-3_{date_stamp}.pdf"
-    elif interval == "monthly":
-        report_title = "Monthly Progress Report (Form-3)"
-        doc_filename = f"{repo_name}_Monthly_Progress_Report_Form-3_{date_stamp}.pdf"
-    else:
-        report_title = "Final Project Evaluation Report"
-        doc_filename = f"{repo_name}_Final_Report_{date_stamp}.pdf"
 
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
@@ -266,6 +286,7 @@ def generate_pdf(interval="weekly", target_date=None, output_dir=None):
     story = []
 
     # 1. Header
+    report_title = "Final Project Evaluation Report" if interval == "final" else "Weekly Progress Report (Form-3)"
     story.append(Paragraph(f"<b>{html.escape(COLLEGE_NAME)}</b>", college_style))
     story.append(Paragraph(f"<b>{html.escape(DEPARTMENT_NAME)}</b>", dept_style))
     story.append(Paragraph(f"<u><b>{report_title}</b></u>", title_style))
@@ -359,33 +380,32 @@ def generate_pdf(interval="weekly", target_date=None, output_dir=None):
     print(f"[SUCCESS] Generated: {full_path} ({len(students)} contributor(s), {total_commits} commits)")
     return full_path
 
-def generate_all_weekly_reports():
-    """Generates the full progression of weekly progress reports matching reference milestones."""
-    milestone_dates = [
-        "2026-08-31",
-        "2026-09-05",
-        "2026-09-12",
-        "2026-09-19",
-        "2026-09-26",
-        "2026-09-27",
-        "2026-10-03",
-        "2026-10-10",
-        "2026-10-17",
-        "2026-10-24",
-        "2026-10-28"
+def generate_all_milestone_reports():
+    """Generates milestone-based Form-3 progress reports across the active project development lifecycle."""
+    milestones = [
+        ("Devops-2026-CS-F-17_Sprint_1_Progress_Report_Form-3.pdf", "2026-07-25", "2026-08-15", "Sprint 1: Architecture, Schemas & UI Foundation (2026-07-25 to 2026-08-15)"),
+        ("Devops-2026-CS-F-17_Sprint_2_Progress_Report_Form-3.pdf", "2026-08-16", "2026-08-22", "Sprint 2: Authentication, Security & Middleware (2026-08-16 to 2026-08-22)"),
+        ("Devops-2026-CS-F-17_Sprint_3_Progress_Report_Form-3.pdf", "2026-08-23", "2026-09-05", "Sprint 3: Database Resilience, Gigs & Bids Workflows (2026-08-23 to 2026-09-05)"),
+        ("Devops-2026-CS-F-17_Sprint_4_Progress_Report_Form-3.pdf", "2026-09-06", "2026-10-20", "Sprint 4: Full Stack Integration & Quality Assurance (2026-09-06 to 2026-10-20)"),
+        ("Devops-2026-CS-F-17_Sprint_5_Progress_Report_Form-3.pdf", "2026-10-21", "2026-10-29", "Sprint 5: DevOps, Docker, Monitoring & CI/CD Pipeline (2026-10-21 to 2026-10-29)")
     ]
     output_directory = "weekly_reports"
-    print(f"\n[INFO] Generating {len(milestone_dates)} Weekly Progress Reports for past weeks into '{output_directory}'...")
-    for m_date in milestone_dates:
-        generate_pdf(interval="weekly", target_date=m_date, output_dir=output_directory)
+    print(f"\n[INFO] Generating {len(milestones)} Milestone Sprint Form-3 Reports into '{output_directory}'...")
+    for filename, start, end, scope in milestones:
+        generate_pdf(
+            interval="sprint",
+            start_date=start,
+            end_date=end,
+            custom_scope=scope,
+            custom_filename=filename,
+            output_dir=output_directory
+        )
 
 if __name__ == "__main__":
-    mode = sys.argv[1].lower() if len(sys.argv) > 1 else "weekly"
-    if mode == "all-weekly":
-        generate_all_weekly_reports()
+    mode = sys.argv[1].lower() if len(sys.argv) > 1 else "final"
+    if mode == "all-sprints" or mode == "all-weekly":
+        generate_all_milestone_reports()
     elif mode == "final":
         generate_pdf("final")
-    elif len(sys.argv) > 2:
-        generate_pdf(mode, target_date=sys.argv[2], output_dir="weekly_reports")
     else:
         generate_pdf(mode)
